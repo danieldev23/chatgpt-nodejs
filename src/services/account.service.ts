@@ -236,6 +236,59 @@ export class AccountService {
     }
     this.saveAccounts();
   }
+
+  async handleToken401(failedToken: string): Promise<AccountData | null> {
+    const acc = this.accounts.get(failedToken);
+    if (acc?.refresh_token) {
+      try {
+        logger.warn(`Token 401 received for ${acc.email || "account"}. Attempting immediate OAuth refresh...`);
+        const refreshed = await this.refreshToken(failedToken, true);
+        if (refreshed) {
+          logger.info(`Successfully auto-fixed token after 401 for ${acc.email || "account"}`);
+          return refreshed;
+        }
+      } catch (err) {
+        logger.error(`Immediate refresh after 401 failed for ${acc.email}:`, err);
+      }
+    }
+
+    // Mark failed account and fallback to next available in pool
+    this.markAccountUsed(failedToken, false, "HTTP 401 Token Invalidated");
+    return this.getAvailableAccount();
+  }
+
+  private refreshTimer: NodeJS.Timeout | null = null;
+
+  startBackgroundRefresh(intervalMs = 10 * 60 * 1000): void {
+    if (this.refreshTimer) return;
+    this.refreshTimer = setInterval(async () => {
+      let refreshedCount = 0;
+      for (const acc of Array.from(this.accounts.values())) {
+        if (!acc.refresh_token || acc.status === "disabled") continue;
+        // Check if token will expire in next 10 minutes
+        if (this.isTokenExpired(acc.access_token, 600)) {
+          try {
+            await this.refreshToken(acc.access_token, true);
+            refreshedCount++;
+          } catch (err) {
+            logger.warn(`Background refresh failed for ${acc.email}:`, (err as Error).message);
+          }
+        }
+      }
+      if (refreshedCount > 0) {
+        logger.info(`[Background Refresh] Automatically refreshed ${refreshedCount} account token(s).`);
+      }
+    }, intervalMs);
+
+    logger.info(`Background token refresh worker started (interval: ${intervalMs / 1000}s).`);
+  }
+
+  stopBackgroundRefresh(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
 }
 
 export const accountService = new AccountService();

@@ -15,6 +15,9 @@ async function main() {
     logger.warn("No CHATGPT2API_AUTH_KEY set! API endpoints will be publicly accessible.");
   }
 
+  // Start background auto-refresh worker for account tokens
+  accountService.startBackgroundRefresh();
+
   try {
     await app.listen({ port: config.port, host: "0.0.0.0" });
     logger.info(`🚀 Server listening at http://0.0.0.0:${config.port}`);
@@ -26,6 +29,7 @@ async function main() {
   // Graceful shutdown
   const shutdown = async (signal: string) => {
     logger.info(`Received ${signal}. Gracefully shutting down...`);
+    accountService.stopBackgroundRefresh();
     await app.close();
     process.exit(0);
   };

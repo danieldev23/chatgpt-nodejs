@@ -111,50 +111,67 @@ export async function* handleChatCompletionStream(
   const completionId = `chatcmpl-${randomUUID().replace(/-/g, "")}`;
   const created = Math.floor(Date.now() / 1000);
 
-  const account = await accountService.getAvailableAccount();
-  const token = account ? account.access_token : "";
-  const backend = new OpenAIBackendAPI(token, account?.proxy);
+  let account = await accountService.getAvailableAccount();
+  let token = account ? account.access_token : "";
+  let backend = new OpenAIBackendAPI(token, account?.proxy);
 
   let sentRole = false;
 
-  try {
-    for await (const delta of streamConversationDeltas(backend, messages, upstreamModel)) {
-      if (!sentRole) {
-        sentRole = true;
-        const firstChunk: ChatCompletionChunk = {
-          id: completionId,
-          object: "chat.completion.chunk",
-          created,
-          model: requestedModel,
-          choices: [
-            {
-              index: 0,
-              delta: { role: "assistant", content: delta },
-              finish_reason: null,
-            },
-          ],
-        };
-        yield `data: ${JSON.stringify(firstChunk)}\n\n`;
-      } else {
-        const chunk: ChatCompletionChunk = {
-          id: completionId,
-          object: "chat.completion.chunk",
-          created,
-          model: requestedModel,
-          choices: [
-            {
-              index: 0,
-              delta: { content: delta },
-              finish_reason: null,
-            },
-          ],
-        };
-        yield `data: ${JSON.stringify(chunk)}\n\n`;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      for await (const delta of streamConversationDeltas(backend, messages, upstreamModel)) {
+        if (!sentRole) {
+          sentRole = true;
+          const firstChunk: ChatCompletionChunk = {
+            id: completionId,
+            object: "chat.completion.chunk",
+            created,
+            model: requestedModel,
+            choices: [
+              {
+                index: 0,
+                delta: { role: "assistant", content: delta },
+                finish_reason: null,
+              },
+            ],
+          };
+          yield `data: ${JSON.stringify(firstChunk)}\n\n`;
+        } else {
+          const chunk: ChatCompletionChunk = {
+            id: completionId,
+            object: "chat.completion.chunk",
+            created,
+            model: requestedModel,
+            choices: [
+              {
+                index: 0,
+                delta: { content: delta },
+                finish_reason: null,
+              },
+            ],
+          };
+          yield `data: ${JSON.stringify(chunk)}\n\n`;
+        }
       }
-    }
 
-    if (!sentRole) {
-      const emptyChunk: ChatCompletionChunk = {
+      if (!sentRole) {
+        const emptyChunk: ChatCompletionChunk = {
+          id: completionId,
+          object: "chat.completion.chunk",
+          created,
+          model: requestedModel,
+          choices: [
+            {
+              index: 0,
+              delta: { role: "assistant", content: "" },
+              finish_reason: null,
+            },
+          ],
+        };
+        yield `data: ${JSON.stringify(emptyChunk)}\n\n`;
+      }
+
+      const finalChunk: ChatCompletionChunk = {
         id: completionId,
         object: "chat.completion.chunk",
         created,
@@ -162,39 +179,39 @@ export async function* handleChatCompletionStream(
         choices: [
           {
             index: 0,
-            delta: { role: "assistant", content: "" },
-            finish_reason: null,
+            delta: {},
+            finish_reason: "stop",
           },
         ],
       };
-      yield `data: ${JSON.stringify(emptyChunk)}\n\n`;
-    }
+      yield `data: ${JSON.stringify(finalChunk)}\n\n`;
+      yield `data: [DONE]\n\n`;
 
-    const finalChunk: ChatCompletionChunk = {
-      id: completionId,
-      object: "chat.completion.chunk",
-      created,
-      model: requestedModel,
-      choices: [
-        {
-          index: 0,
-          delta: {},
-          finish_reason: "stop",
-        },
-      ],
-    };
-    yield `data: ${JSON.stringify(finalChunk)}\n\n`;
-    yield `data: [DONE]\n\n`;
+      if (token) {
+        accountService.markAccountUsed(token, true);
+      }
+      return;
+    } catch (err) {
+      const errMsg = (err as Error).message || "";
+      const is401 = errMsg.includes("401") || errMsg.includes("Token invalidated");
 
-    if (token) {
-      accountService.markAccountUsed(token, true);
+      if (is401 && !sentRole && attempt === 0 && token) {
+        logger.warn(`Stream encountered 401 on initial handshake. Auto-refreshing token...`);
+        const newAccount = await accountService.handleToken401(token);
+        if (newAccount) {
+          account = newAccount;
+          token = account.access_token;
+          backend = new OpenAIBackendAPI(token, account.proxy);
+          continue; // Retry with refreshed/healthy account!
+        }
+      }
+
+      if (token) {
+        accountService.markAccountUsed(token, false, errMsg);
+      }
+      logger.error("Chat completion stream error:", err);
+      throw err;
     }
-  } catch (err) {
-    if (token) {
-      accountService.markAccountUsed(token, false, (err as Error).message);
-    }
-    logger.error("Chat completion stream error:", err);
-    throw err;
   }
 }
 
@@ -207,47 +224,65 @@ export async function handleChatCompletion(
   const completionId = `chatcmpl-${randomUUID().replace(/-/g, "")}`;
   const created = Math.floor(Date.now() / 1000);
 
-  const account = await accountService.getAvailableAccount();
-  const token = account ? account.access_token : "";
-  const backend = new OpenAIBackendAPI(token, account?.proxy);
+  let account = await accountService.getAvailableAccount();
+  let token = account ? account.access_token : "";
+  let backend = new OpenAIBackendAPI(token, account?.proxy);
 
-  try {
-    const fullText = await collectConversationText(backend, messages, upstreamModel);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const fullText = await collectConversationText(backend, messages, upstreamModel);
 
-    const promptText = messages.map((m) => m.content).join("\n");
-    const promptTokens = estimateTokens(promptText);
-    const completionTokens = estimateTokens(fullText);
+      const promptText = messages.map((m) => m.content).join("\n");
+      const promptTokens = estimateTokens(promptText);
+      const completionTokens = estimateTokens(fullText);
 
-    if (token) {
-      accountService.markAccountUsed(token, true);
-    }
+      if (token) {
+        accountService.markAccountUsed(token, true);
+      }
 
-    return {
-      id: completionId,
-      object: "chat.completion",
-      created,
-      model: requestedModel,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: "assistant",
-            content: fullText,
+      return {
+        id: completionId,
+        object: "chat.completion",
+        created,
+        model: requestedModel,
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: fullText,
+            },
+            finish_reason: "stop",
           },
-          finish_reason: "stop",
+        ],
+        usage: {
+          prompt_tokens: promptTokens,
+          completion_tokens: completionTokens,
+          total_tokens: promptTokens + completionTokens,
         },
-      ],
-      usage: {
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: promptTokens + completionTokens,
-      },
-    };
-  } catch (err) {
-    if (token) {
-      accountService.markAccountUsed(token, false, (err as Error).message);
+      };
+    } catch (err) {
+      const errMsg = (err as Error).message || "";
+      const is401 = errMsg.includes("401") || errMsg.includes("Token invalidated");
+
+      if (is401 && attempt === 0 && token) {
+        logger.warn(`Encountered 401 on completion. Auto-refreshing token...`);
+        const newAccount = await accountService.handleToken401(token);
+        if (newAccount) {
+          account = newAccount;
+          token = account.access_token;
+          backend = new OpenAIBackendAPI(token, account.proxy);
+          continue; // Retry with refreshed/healthy account!
+        }
+      }
+
+      if (token) {
+        accountService.markAccountUsed(token, false, errMsg);
+      }
+      logger.error("Chat completion error:", err);
+      throw err;
     }
-    logger.error("Chat completion error:", err);
-    throw err;
   }
+
+  throw new Error("Chat completion failed after token auto-fix retry");
 }
