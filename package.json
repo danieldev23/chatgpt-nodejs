@@ -6,8 +6,10 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build:tsc": "tsc",
+    "build": "node scripts/build.js",
+    "start": "node dist/index.js",
+    "start:prod": "cd production && npm start"
   },
   "keywords": [
     "chatgpt",
@@ -27,7 +29,10 @@
     "undici": "^7.4.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.13.10",
+    "fs-extra": "^11.4.1",
+    "javascript-obfuscator": "^5.8.1",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }
