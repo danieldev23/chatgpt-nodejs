@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { requireAdmin } from "../middlewares/auth.js";
-import { oauthService } from "../../services/oauthService.js";
-import { accountService } from "../../services/accountService.js";
-import { logger } from "../../utils/logger.js";
+import { requireAdmin } from "../middlewares/auth.middleware.js";
+import { oauthService } from "../../services/oauth.service.js";
+import { accountService } from "../../services/account.service.js";
+import { logger } from "../../utils/logger.util.js";
 
 export async function oauthRoutes(fastify: FastifyInstance): Promise<void> {
   // 1. Start OAuth login

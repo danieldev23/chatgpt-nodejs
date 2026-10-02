@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import { config } from "../../services/config.js";
+import { config } from "../../services/config.service.js";
 
 function extractToken(request: FastifyRequest): string {
   const authHeader = request.headers.authorization;

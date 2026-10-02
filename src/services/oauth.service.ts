@@ -1,7 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { generatePkce } from "../utils/pkce.js";
-import { logger } from "../utils/logger.js";
-import { config } from "./config.js";
+import { generatePkce } from "../utils/pkce.util.js";
+import { logger } from "../utils/logger.util.js";
+import { config } from "./config.service.js";
 
 const OAUTH_TOKEN_URL = "https://auth.openai.com/oauth/token";
 const OAUTH_CLIENT_ID = "app_2SKx67EdpoN0G6j64rFvigXD";

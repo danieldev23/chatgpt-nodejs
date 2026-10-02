@@ -1,11 +1,11 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
-import { aiRoutes } from "./routes/ai.js";
-import { accountRoutes } from "./routes/accounts.js";
-import { oauthRoutes } from "./routes/oauth.js";
-import { systemRoutes } from "./routes/system.js";
-import { logger } from "../utils/logger.js";
+import { aiRoutes } from "./routes/ai.route.js";
+import { accountRoutes } from "./routes/accounts.route.js";
+import { oauthRoutes } from "./routes/oauth.route.js";
+import { systemRoutes } from "./routes/system.route.js";
+import { logger } from "../utils/logger.util.js";
 
 export function createServer(): FastifyInstance {
   const app = Fastify({

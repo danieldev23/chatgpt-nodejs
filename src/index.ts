@@ -1,7 +1,7 @@
 import { createServer } from "./api/server.js";
-import { config } from "./services/config.js";
-import { logger } from "./utils/logger.js";
-import { accountService } from "./services/accountService.js";
+import { config } from "./services/config.service.js";
+import { logger } from "./utils/logger.util.js";
+import { accountService } from "./services/account.service.js";
 
 async function main() {
   const app = createServer();

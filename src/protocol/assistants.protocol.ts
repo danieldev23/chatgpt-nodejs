@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { config } from "../services/config.js";
+import { config } from "../services/config.service.js";
 
 const STORE_FILE = path.join(config.dataDir, "openai_store.json");
 

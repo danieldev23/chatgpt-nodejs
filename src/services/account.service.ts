@@ -1,6 +1,6 @@
-import { storage, type AccountData } from "./storage.js";
-import { oauthService } from "./oauthService.js";
-import { logger } from "../utils/logger.js";
+import { storage, type AccountData } from "./storage.service.js";
+import { oauthService } from "./oauth.service.js";
+import { logger } from "../utils/logger.util.js";
 
 export class AccountService {
   private accounts = new Map<string, AccountData>();

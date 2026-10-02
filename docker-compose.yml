@@ -1,6 +1,8 @@
 services:
   chatgpt-nodejs:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     container_name: chatgpt-nodejs
     restart: always
     ports:

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { handleChatCompletion, type ChatCompletionRequest } from "./chatCompletion.js";
+import { handleChatCompletion, type ChatCompletionRequest } from "./chat-completion.protocol.js";
 
 export interface CompletionRequest {
   model?: string;

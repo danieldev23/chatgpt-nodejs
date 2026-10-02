@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { requireAdmin } from "../middlewares/auth.js";
-import { accountService } from "../../services/accountService.js";
-import { OpenAIBackendAPI } from "../../services/openaiBackend.js";
-import { logger } from "../../utils/logger.js";
+import { requireAdmin } from "../middlewares/auth.middleware.js";
+import { accountService } from "../../services/account.service.js";
+import { OpenAIBackendAPI } from "../../services/openai-backend.service.js";
+import { logger } from "../../utils/logger.util.js";
 
 export async function accountRoutes(fastify: FastifyInstance): Promise<void> {
   // 1. List accounts

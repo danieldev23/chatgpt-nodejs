@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { OpenAIBackendAPI } from "../services/openaiBackend.js";
-import { accountService } from "../services/accountService.js";
-import { logger } from "../utils/logger.js";
+import { OpenAIBackendAPI } from "../services/openai-backend.service.js";
+import { accountService } from "../services/account.service.js";
+import { logger } from "../utils/logger.util.js";
 
 export interface ImageGenerationRequest {
   prompt: string;

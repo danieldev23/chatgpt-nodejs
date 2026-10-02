@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import { config } from "./config.js";
-import { logger } from "../utils/logger.js";
+import { config } from "./config.service.js";
+import { logger } from "../utils/logger.util.js";
 
 export interface AccountData {
   email?: string;

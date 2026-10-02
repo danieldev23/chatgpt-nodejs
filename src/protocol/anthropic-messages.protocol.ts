@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { OpenAIBackendAPI, type ConversationMessage } from "../services/openaiBackend.js";
-import { streamConversationDeltas, collectConversationText } from "./conversation.js";
-import { accountService } from "../services/accountService.js";
-import { logger } from "../utils/logger.js";
+import { OpenAIBackendAPI, type ConversationMessage } from "../services/openai-backend.service.js";
+import { streamConversationDeltas, collectConversationText } from "./conversation.protocol.js";
+import { accountService } from "../services/account.service.js";
+import { logger } from "../utils/logger.util.js";
 
 export interface AnthropicMessagePart {
   type: string;

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { config } from "../services/config.js";
+import { config } from "../services/config.service.js";
 
 const UPLOADS_DIR = path.join(config.dataDir, "uploads");
 const METADATA_FILE = path.join(config.dataDir, "files_metadata.json");

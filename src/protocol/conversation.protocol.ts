@@ -1,4 +1,4 @@
-import { OpenAIBackendAPI, type ConversationMessage } from "../services/openaiBackend.js";
+import { OpenAIBackendAPI, type ConversationMessage } from "../services/openai-backend.service.js";
 
 function sanitizeOutputText(text: string): string {
   let cleaned = text;

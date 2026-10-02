@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { config } from "../../services/config.js";
-import { requireAdmin, requireAuth } from "../middlewares/auth.js";
+import { config } from "../../services/config.service.js";
+import { requireAdmin, requireAuth } from "../middlewares/auth.middleware.js";
 
 export async function systemRoutes(fastify: FastifyInstance): Promise<void> {
   // 1. Version

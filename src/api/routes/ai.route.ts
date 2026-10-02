@@ -1,35 +1,35 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { requireAuth } from "../middlewares/auth.js";
+import { requireAuth } from "../middlewares/auth.middleware.js";
 import {
   handleChatCompletion,
   handleChatCompletionStream,
   type ChatCompletionRequest,
-} from "../../protocol/chatCompletion.js";
+} from "../../protocol/chat-completion.protocol.js";
 import {
   handleAnthropicMessage,
   handleAnthropicMessageStream,
   type AnthropicMessageRequest,
-} from "../../protocol/anthropicMessages.js";
+} from "../../protocol/anthropic-messages.protocol.js";
 import {
   handleImageGeneration,
   type ImageGenerationRequest,
-} from "../../protocol/images.js";
-import { handleCompletion, type CompletionRequest } from "../../protocol/completions.js";
-import { handleEmbeddings, type EmbeddingRequest } from "../../protocol/embeddings.js";
-import { handleModeration, type ModerationRequest } from "../../protocol/moderation.js";
+} from "../../protocol/images.protocol.js";
+import { handleCompletion, type CompletionRequest } from "../../protocol/completions.protocol.js";
+import { handleEmbeddings, type EmbeddingRequest } from "../../protocol/embeddings.protocol.js";
+import { handleModeration, type ModerationRequest } from "../../protocol/moderation.protocol.js";
 import {
   handleSpeech,
   handleTranscription,
   handleTranslation,
   type SpeechRequest,
-} from "../../protocol/audio.js";
+} from "../../protocol/audio.protocol.js";
 import {
   listFiles,
   uploadFile,
   getFile,
   deleteFile,
   getFileContent,
-} from "../../protocol/files.js";
+} from "../../protocol/files.protocol.js";
 import {
   createAssistant,
   listAssistants,
@@ -41,10 +41,10 @@ import {
   listBatches,
   createFineTuningJob,
   listFineTuningJobs,
-} from "../../protocol/assistants.js";
-import { OpenAIBackendAPI } from "../../services/openaiBackend.js";
-import { accountService } from "../../services/accountService.js";
-import { logger } from "../../utils/logger.js";
+} from "../../protocol/assistants.protocol.js";
+import { OpenAIBackendAPI } from "../../services/openai-backend.service.js";
+import { accountService } from "../../services/account.service.js";
+import { logger } from "../../utils/logger.util.js";
 
 export async function aiRoutes(fastify: FastifyInstance): Promise<void> {
   // 1. OpenAI Models

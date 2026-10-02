@@ -4,10 +4,10 @@ import {
   buildLegacyRequirementsToken,
   parsePowResources,
   solvePow,
-} from "../utils/pow.js";
-import { solveTurnstileToken } from "../utils/turnstile.js";
-import { logger } from "../utils/logger.js";
-import { config } from "./config.js";
+} from "../utils/pow.util.js";
+import { solveTurnstileToken } from "../utils/turnstile.util.js";
+import { logger } from "../utils/logger.util.js";
+import { config } from "./config.service.js";
 
 export interface ChatRequirements {
   token: string;
