@@ -1,0 +1,15 @@
+services:
+  chatgpt-nodejs:
+    build: .
+    container_name: chatgpt-nodejs
+    restart: always
+    ports:
+      - "${PORT:-3040}:3040"
+    environment:
+      - PORT=3040
+      - CHATGPT2API_AUTH_KEY=${CHATGPT2API_AUTH_KEY:-chatgpt2api_secret_key_change_me}
+      - STORAGE_BACKEND=json
+      - LOG_LEVEL=info
+      - PROXY_URL=${PROXY_URL:-}
+    volumes:
+      - ./data:/app/data
