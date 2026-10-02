@@ -10,6 +10,38 @@ import {
   handleAnthropicMessageStream,
   type AnthropicMessageRequest,
 } from "../../protocol/anthropicMessages.js";
+import {
+  handleImageGeneration,
+  type ImageGenerationRequest,
+} from "../../protocol/images.js";
+import { handleCompletion, type CompletionRequest } from "../../protocol/completions.js";
+import { handleEmbeddings, type EmbeddingRequest } from "../../protocol/embeddings.js";
+import { handleModeration, type ModerationRequest } from "../../protocol/moderation.js";
+import {
+  handleSpeech,
+  handleTranscription,
+  handleTranslation,
+  type SpeechRequest,
+} from "../../protocol/audio.js";
+import {
+  listFiles,
+  uploadFile,
+  getFile,
+  deleteFile,
+  getFileContent,
+} from "../../protocol/files.js";
+import {
+  createAssistant,
+  listAssistants,
+  getAssistant,
+  deleteAssistant,
+  createVectorStore,
+  listVectorStores,
+  createBatch,
+  listBatches,
+  createFineTuningJob,
+  listFineTuningJobs,
+} from "../../protocol/assistants.js";
 import { OpenAIBackendAPI } from "../../services/openaiBackend.js";
 import { accountService } from "../../services/accountService.js";
 import { logger } from "../../utils/logger.js";
@@ -77,7 +109,251 @@ export async function aiRoutes(fastify: FastifyInstance): Promise<void> {
     }
   });
 
-  // 3. Anthropic Messages (/v1/messages)
+  // 3. Image Generations (/v1/images/generations)
+  fastify.post("/v1/images/generations", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = req.body as ImageGenerationRequest;
+    if (!body || !body.prompt) {
+      return reply.status(400).send({ error: { message: "prompt is required" } });
+    }
+
+    try {
+      const result = await handleImageGeneration(body);
+      return reply.send(result);
+    } catch (err) {
+      logger.error("Image generation error:", err);
+      return reply.status(502).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  // 4. Image Edits (/v1/images/edits)
+  fastify.post("/v1/images/edits", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      let prompt = "";
+      if (req.isMultipart()) {
+        const parts = req.parts();
+        for await (const part of parts) {
+          if (part.type === "field" && part.fieldname === "prompt") {
+            prompt = part.value as string;
+          }
+        }
+      } else {
+        prompt = (req.body as { prompt?: string })?.prompt || "";
+      }
+
+      if (!prompt) {
+        return reply.status(400).send({ error: { message: "prompt is required for image edits" } });
+      }
+
+      const result = await handleImageGeneration({ prompt, model: "gpt-image-2" });
+      return reply.send(result);
+    } catch (err) {
+      logger.error("Image edit error:", err);
+      return reply.status(502).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  // 5. Legacy Completions (/v1/completions)
+  fastify.post("/v1/completions", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = req.body as CompletionRequest;
+    if (!body || !body.prompt) {
+      return reply.status(400).send({ error: { message: "prompt is required" } });
+    }
+
+    try {
+      const result = await handleCompletion(body);
+      return reply.send(result);
+    } catch (err) {
+      logger.error("Completion error:", err);
+      return reply.status(502).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  // 6. Embeddings (/v1/embeddings)
+  fastify.post("/v1/embeddings", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = req.body as EmbeddingRequest;
+    if (!body || !body.input) {
+      return reply.status(400).send({ error: { message: "input is required" } });
+    }
+
+    const result = handleEmbeddings(body);
+    return reply.send(result);
+  });
+
+  // 7. Moderations (/v1/moderations)
+  fastify.post("/v1/moderations", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = req.body as ModerationRequest;
+    if (!body || !body.input) {
+      return reply.status(400).send({ error: { message: "input is required" } });
+    }
+
+    const result = handleModeration(body);
+    return reply.send(result);
+  });
+
+  // 8. Audio Speech (/v1/audio/speech)
+  fastify.post("/v1/audio/speech", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = req.body as SpeechRequest;
+    if (!body || !body.input) {
+      return reply.status(400).send({ error: { message: "input is required" } });
+    }
+
+    try {
+      const audioBuffer = await handleSpeech(body);
+      reply.header("Content-Type", "audio/mpeg");
+      return reply.send(audioBuffer);
+    } catch (err) {
+      logger.error("Speech generation error:", err);
+      return reply.status(502).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  // 9. Audio Transcriptions (/v1/audio/transcriptions)
+  fastify.post("/v1/audio/transcriptions", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    let filename = "audio.mp3";
+    if (req.isMultipart()) {
+      const parts = req.parts();
+      for await (const part of parts) {
+        if (part.type === "file") {
+          filename = part.filename || filename;
+        }
+      }
+    }
+    const result = handleTranscription(filename);
+    return reply.send(result);
+  });
+
+  // 10. Audio Translations (/v1/audio/translations)
+  fastify.post("/v1/audio/translations", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    let filename = "audio.mp3";
+    if (req.isMultipart()) {
+      const parts = req.parts();
+      for await (const part of parts) {
+        if (part.type === "file") {
+          filename = part.filename || filename;
+        }
+      }
+    }
+    const result = handleTranslation(filename);
+    return reply.send(result);
+  });
+
+  // 11. Files API
+  fastify.get("/v1/files", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const query = req.query as { purpose?: string };
+    return reply.send(listFiles(query?.purpose));
+  });
+
+  fastify.post("/v1/files", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    if (!req.isMultipart()) {
+      return reply.status(400).send({ error: { message: "multipart form data required" } });
+    }
+
+    let filename = "upload.bin";
+    let purpose = "user_data";
+    let fileBuffer: Buffer | null = null;
+
+    const parts = req.parts();
+    for await (const part of parts) {
+      if (part.type === "file") {
+        filename = part.filename || filename;
+        fileBuffer = await part.toBuffer();
+      } else if (part.type === "field" && part.fieldname === "purpose") {
+        purpose = String(part.value || purpose);
+      }
+    }
+
+    if (!fileBuffer) {
+      return reply.status(400).send({ error: { message: "file is required" } });
+    }
+
+    const result = uploadFile(fileBuffer, filename, purpose);
+    return reply.send(result);
+  });
+
+  fastify.get("/v1/files/:file_id", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const { file_id } = req.params as { file_id: string };
+    try {
+      return reply.send(getFile(file_id));
+    } catch (err) {
+      return reply.status(404).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  fastify.delete("/v1/files/:file_id", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const { file_id } = req.params as { file_id: string };
+    try {
+      return reply.send(deleteFile(file_id));
+    } catch (err) {
+      return reply.status(404).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  fastify.get("/v1/files/:file_id/content", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const { file_id } = req.params as { file_id: string };
+    try {
+      const content = getFileContent(file_id);
+      reply.header("Content-Type", "application/octet-stream");
+      return reply.send(content);
+    } catch (err) {
+      return reply.status(404).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  // 12. Assistants API
+  fastify.post("/v1/assistants", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(createAssistant((req.body as Record<string, unknown>) || {}));
+  });
+
+  fastify.get("/v1/assistants", { preHandler: requireAuth }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(listAssistants());
+  });
+
+  fastify.get("/v1/assistants/:id", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const { id } = req.params as { id: string };
+    try {
+      return reply.send(getAssistant(id));
+    } catch (err) {
+      return reply.status(404).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  fastify.delete("/v1/assistants/:id", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const { id } = req.params as { id: string };
+    try {
+      return reply.send(deleteAssistant(id));
+    } catch (err) {
+      return reply.status(404).send({ error: { message: (err as Error).message } });
+    }
+  });
+
+  // 13. Vector Stores API
+  fastify.post("/v1/vector_stores", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(createVectorStore((req.body as Record<string, unknown>) || {}));
+  });
+
+  fastify.get("/v1/vector_stores", { preHandler: requireAuth }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(listVectorStores());
+  });
+
+  // 14. Batches API
+  fastify.post("/v1/batches", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(createBatch((req.body as Record<string, unknown>) || {}));
+  });
+
+  fastify.get("/v1/batches", { preHandler: requireAuth }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(listBatches());
+  });
+
+  // 15. Fine-Tuning Jobs API
+  fastify.post("/v1/fine_tuning/jobs", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(createFineTuningJob((req.body as Record<string, unknown>) || {}));
+  });
+
+  fastify.get("/v1/fine_tuning/jobs", { preHandler: requireAuth }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(listFineTuningJobs());
+  });
+
+  // 16. Anthropic Messages (/v1/messages)
   fastify.post("/v1/messages", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
     const body = req.body as AnthropicMessageRequest;
 
@@ -127,7 +403,7 @@ export async function aiRoutes(fastify: FastifyInstance): Promise<void> {
     }
   });
 
-  // 4. OpenAI Search (/v1/search)
+  // 17. OpenAI Search (/v1/search)
   fastify.post("/v1/search", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
     const body = req.body as { prompt?: string };
     const prompt = body?.prompt || "";
@@ -150,7 +426,7 @@ export async function aiRoutes(fastify: FastifyInstance): Promise<void> {
     }
   });
 
-  // 5. OpenAI Responses (/v1/responses)
+  // 18. OpenAI Responses (/v1/responses)
   fastify.post("/v1/responses", { preHandler: requireAuth }, async (req: FastifyRequest, reply: FastifyReply) => {
     const body = req.body as { input?: unknown; model?: string; stream?: boolean };
     const inputText = typeof body.input === "string" ? body.input : JSON.stringify(body.input || "");

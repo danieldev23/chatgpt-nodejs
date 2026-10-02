@@ -344,6 +344,21 @@ export class OpenAIBackendAPI {
     }
   }
 
+  async getFileDownloadUrl(fileId: string): Promise<string> {
+    const path = `/backend-api/files/${fileId}/download`;
+    const res = await fetch(
+      `${this.baseUrl}${path}`,
+      this.getFetchOptions({
+        headers: this.baseHeaders(path),
+      })
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to get file download url for ${fileId}: HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as { download_url?: string; url?: string };
+    return data.download_url || data.url || "";
+  }
+
   async getUserInfo(): Promise<Record<string, unknown>> {
     if (!this.accessToken) {
       throw new Error("Access token is required to fetch user info");

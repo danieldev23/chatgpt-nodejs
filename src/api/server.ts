@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
 import { aiRoutes } from "./routes/ai.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { oauthRoutes } from "./routes/oauth.js";
@@ -17,6 +18,13 @@ export function createServer(): FastifyInstance {
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["*"],
+  });
+
+  // Enable Multipart
+  app.register(multipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB
+    },
   });
 
   // Register routes
