@@ -406,36 +406,55 @@ export class OpenAIBackendAPI {
       })
     );
 
-    const fallbackModels = [
+    const standardModels = [
       { id: "gpt-4o", object: "model", created: 1715367049, owned_by: "openai" },
       { id: "gpt-4o-mini", object: "model", created: 1721237833, owned_by: "openai" },
+      { id: "chatgpt-4o-latest", object: "model", created: 1723600000, owned_by: "openai" },
       { id: "o1", object: "model", created: 1726000000, owned_by: "openai" },
       { id: "o1-mini", object: "model", created: 1726000000, owned_by: "openai" },
+      { id: "o1-preview", object: "model", created: 1726000000, owned_by: "openai" },
+      { id: "o3-mini", object: "model", created: 1738000000, owned_by: "openai" },
+      { id: "gpt-4-turbo", object: "model", created: 1712361441, owned_by: "openai" },
+      { id: "gpt-4", object: "model", created: 1687882411, owned_by: "openai" },
+      { id: "gpt-3.5-turbo", object: "model", created: 1677610602, owned_by: "openai" },
+      { id: "claude-3-5-sonnet-20241022", object: "model", created: 1729555200, owned_by: "anthropic" },
+      { id: "claude-3-5-haiku-20241022", object: "model", created: 1729555200, owned_by: "anthropic" },
+      { id: "claude-3-opus-20240229", object: "model", created: 1709251200, owned_by: "anthropic" },
+      { id: "gpt-image-2", object: "model", created: 1700000000, owned_by: "openai" },
+      { id: "dall-e-3", object: "model", created: 1700000000, owned_by: "openai" },
       { id: "auto", object: "model", created: 1700000000, owned_by: "chatgpt" },
     ];
 
     if (!res.ok) {
-      return fallbackModels;
+      return standardModels;
     }
 
     try {
       const data = (await res.json()) as { models?: Array<{ slug?: string; created?: number; owned_by?: string }> };
-      if (!data.models || !Array.isArray(data.models)) {
-        return fallbackModels;
+      const modelMap = new Map<string, { id: string; object: string; created: number; owned_by: string }>();
+
+      // Put standard public models first
+      for (const m of standardModels) {
+        modelMap.set(m.id, m);
       }
 
-      const list = data.models
-        .filter((m) => !!m.slug)
-        .map((m) => ({
-          id: m.slug as string,
-          object: "model",
-          created: m.created || Math.floor(Date.now() / 1000),
-          owned_by: m.owned_by || "chatgpt",
-        }));
+      // Add upstream internal models
+      if (data.models && Array.isArray(data.models)) {
+        for (const item of data.models) {
+          if (item.slug && !modelMap.has(item.slug)) {
+            modelMap.set(item.slug, {
+              id: item.slug,
+              object: "model",
+              created: item.created || Math.floor(Date.now() / 1000),
+              owned_by: item.owned_by || "chatgpt",
+            });
+          }
+        }
+      }
 
-      return list.length > 0 ? list : fallbackModels;
+      return Array.from(modelMap.values());
     } catch {
-      return fallbackModels;
+      return standardModels;
     }
   }
 }

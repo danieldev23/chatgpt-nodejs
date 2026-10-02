@@ -84,10 +84,29 @@ function normalizeMessages(messages: ChatMessage[]): ConversationMessage[] {
   });
 }
 
+export function resolveModelSlug(model?: string): string {
+  if (!model) return "auto";
+  const m = model.toLowerCase().trim();
+  const aliasMap: Record<string, string> = {
+    "gpt-3.5-turbo": "gpt-4o-mini",
+    "gpt-4": "gpt-4o",
+    "gpt-4-turbo": "gpt-4o",
+    "gpt-4o": "gpt-4o",
+    "gpt-4o-mini": "gpt-4o-mini",
+    "o1": "o1",
+    "o1-mini": "o1-mini",
+    "o1-preview": "o1",
+    "o3-mini": "o3-mini",
+    "chatgpt-4o-latest": "gpt-4o",
+  };
+  return aliasMap[m] || model;
+}
+
 export async function* handleChatCompletionStream(
   req: ChatCompletionRequest
 ): AsyncGenerator<string, void, unknown> {
-  const model = req.model || "auto";
+  const requestedModel = req.model || "auto";
+  const upstreamModel = resolveModelSlug(requestedModel);
   const messages = normalizeMessages(req.messages || []);
   const completionId = `chatcmpl-${randomUUID().replace(/-/g, "")}`;
   const created = Math.floor(Date.now() / 1000);
@@ -99,14 +118,14 @@ export async function* handleChatCompletionStream(
   let sentRole = false;
 
   try {
-    for await (const delta of streamConversationDeltas(backend, messages, model)) {
+    for await (const delta of streamConversationDeltas(backend, messages, upstreamModel)) {
       if (!sentRole) {
         sentRole = true;
         const firstChunk: ChatCompletionChunk = {
           id: completionId,
           object: "chat.completion.chunk",
           created,
-          model,
+          model: requestedModel,
           choices: [
             {
               index: 0,
@@ -121,7 +140,7 @@ export async function* handleChatCompletionStream(
           id: completionId,
           object: "chat.completion.chunk",
           created,
-          model,
+          model: requestedModel,
           choices: [
             {
               index: 0,
@@ -139,7 +158,7 @@ export async function* handleChatCompletionStream(
         id: completionId,
         object: "chat.completion.chunk",
         created,
-        model,
+        model: requestedModel,
         choices: [
           {
             index: 0,
@@ -155,7 +174,7 @@ export async function* handleChatCompletionStream(
       id: completionId,
       object: "chat.completion.chunk",
       created,
-      model,
+      model: requestedModel,
       choices: [
         {
           index: 0,
@@ -182,7 +201,8 @@ export async function* handleChatCompletionStream(
 export async function handleChatCompletion(
   req: ChatCompletionRequest
 ): Promise<ChatCompletionResponse> {
-  const model = req.model || "auto";
+  const requestedModel = req.model || "auto";
+  const upstreamModel = resolveModelSlug(requestedModel);
   const messages = normalizeMessages(req.messages || []);
   const completionId = `chatcmpl-${randomUUID().replace(/-/g, "")}`;
   const created = Math.floor(Date.now() / 1000);
@@ -192,7 +212,7 @@ export async function handleChatCompletion(
   const backend = new OpenAIBackendAPI(token, account?.proxy);
 
   try {
-    const fullText = await collectConversationText(backend, messages, model);
+    const fullText = await collectConversationText(backend, messages, upstreamModel);
 
     const promptText = messages.map((m) => m.content).join("\n");
     const promptTokens = estimateTokens(promptText);
@@ -206,7 +226,7 @@ export async function handleChatCompletion(
       id: completionId,
       object: "chat.completion",
       created,
-      model,
+      model: requestedModel,
       choices: [
         {
           index: 0,
