@@ -180,6 +180,20 @@ curl -X POST "http://localhost:3040/v1/messages" \
 
 ---
 
+## 💖 Support & Donate (Ủng Hộ Tác Giả)
+
+Nếu dự án này hữu ích với công việc hoặc hệ thống của bạn, hãy mời tác giả một tách cà phê để tiếp tục duy trì và cập nhật các thuật toán reverse mới nhất nhé! ☕
+
+<div align="center">
+  <img src="assets/donate.jpg" alt="Donate QR Code - Đặng Quốc Huy" width="320" style="border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+  <br/>
+  <p><b>Chủ tài khoản:</b> ĐẶNG QUỐC HUY<br/>
+  <b>Hỗ trợ thanh toán:</b> MoMo | VietQR | Napas 247</p>
+</div>
+
+---
+
 ## 🛡️ License
 
-MIT License. Developed by Danieldev.
+MIT License. Developed by [Danieldev](https://github.com/danieldev23).
+

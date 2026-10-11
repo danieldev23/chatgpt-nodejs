@@ -340,3 +340,17 @@ curl -X POST "http://localhost:3040/v1/chat/completions" \
 - **Cách xử lý**:
   - Đảm bảo trong config Nginx có dòng `proxy_buffering off;` và `chunked_transfer_encoding on;`.
   - Nếu domain trỏ qua Cloudflare Dashboard, vào **Rules** -> **Page Rules** -> tắt `Response Buffering` và `Browser Cache`.
+
+---
+
+## 💖 Support & Donate
+
+Nếu dự án này giúp ích cho bạn trong công việc hoặc hệ thống, bạn có thể ủng hộ tác giả qua mã QR dưới đây:
+
+<div align="center">
+  <img src="assets/donate.jpg" alt="Donate QR Code - Đặng Quốc Huy" width="300" style="border-radius: 12px;" />
+  <br/>
+  <p><b>Chủ tài khoản:</b> ĐẶNG QUỐC HUY<br/>
+  <b>Hỗ trợ:</b> MoMo | VietQR | Napas 247</p>
+</div>
+

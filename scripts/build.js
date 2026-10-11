@@ -124,6 +124,13 @@ for (const file of configFiles) {
   }
 }
 
+// Copy static assets (Donate QR, images)
+const assetsDir = path.join(rootDir, "assets");
+if (fs.existsSync(assetsDir)) {
+  fs.copySync(assetsDir, path.join(productionDir, "assets"));
+  console.log("  📄 Copied: assets directory");
+}
+
 // Generate self-contained production dockerfile
 const prodDockerfileContent = `FROM node:22-alpine
 
