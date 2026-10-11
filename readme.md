@@ -2,7 +2,6 @@
 
 Một server **Reverse Proxy từ ChatGPT Web sang chuẩn REST API của OpenAI & Anthropic**, được xây dựng hiện đại bằng **Node.js 22 LTS, TypeScript & Fastify**.
 
-Giải pháp thay thế trực tiếp cho `chatgpt2api` (bản Python) với mức chiếm dụng RAM cực thấp, loại bỏ hoàn toàn hiện tượng nghẽn luồng (GIL), hỗ trợ native async Server-Sent Events (SSE) streaming tốc độ cao và tích hợp động cơ giải Proof-of-Work (PoW) `sha3-512` bằng C++ native OpenSSL chỉ trong ~2ms.
 
 ---
 
