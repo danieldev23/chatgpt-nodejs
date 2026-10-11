@@ -1,61 +1,63 @@
-# 🚀 ChatGPT-Nodejs (OpenAI & Anthropic Compatible REST API)
+# 🚀 chatgpt-nodejs (Server Reverse Proxy Chuẩn OpenAI & Anthropic API)
 
-A high-performance, lightweight **ChatGPT Web to OpenAI & Anthropic REST API Reverse Proxy** written in modern Node.js & TypeScript.
+Một server **Reverse Proxy từ ChatGPT Web sang chuẩn REST API của OpenAI & Anthropic**, được xây dựng hiện đại bằng **Node.js 22 LTS, TypeScript & Fastify**.
 
-Direct drop-in replacement for `chatgpt2api` with ultra-low memory footprint, zero GIL/thread contention, native async SSE streaming, and native OpenSSL `sha3-512` Proof-of-Work execution.
-
----
-
-## ⚡ Features
-
-- **OpenAI Compatible REST API**:
-  - `POST /v1/chat/completions` (Full support for SSE streaming `stream: true` and non-streaming)
-  - `GET /v1/models` (Model discovery aligning with OpenAI standards)
-  - `POST /v1/responses` (OpenAI Realtime/Responses format)
-  - `POST /v1/search` (ChatGPT search query bridge)
-- **Anthropic Claude Compatible API**:
-  - `POST /v1/messages` (Full compatibility with Claude API clients)
-- **Reverse Engineering & Sentinel Engine**:
-  - **OpenAI Web Sentinel SDK Handshake**: automated `prepare` and `finalize` requirements negotiation.
-  - **High-speed Proof-of-Work (PoW)**: native C++ `node:crypto` SHA3-512 solver completing in ~2ms.
-  - **Turnstile Bytecode VM**: embedded virtual machine for solving Cloudflare/Turnstile challenges.
-  - **Fingerprint Emulation**: realistic browser headers (`sec-ch-ua`, `oai-device-id`, `oai-session-id`, `user-agent`).
-  - **JSON Patch Diff Engine**: parses RFC 6902 incremental patches and delta streams.
-- **Account Pool Management**:
-  - Round-robin token rotation with health monitoring.
-  - Hot account injection via REST API without server restart.
-  - Automated OAuth token refresh via `https://auth.openai.com/oauth/token`.
-  - PKCE OAuth login bridge (`/api/accounts/oauth/start` and `/finish`).
-  - JSON file persistence (`data/accounts.json`).
+Giải pháp thay thế trực tiếp cho `chatgpt2api` (bản Python) với mức chiếm dụng RAM cực thấp, loại bỏ hoàn toàn hiện tượng nghẽn luồng (GIL), hỗ trợ native async Server-Sent Events (SSE) streaming tốc độ cao và tích hợp động cơ giải Proof-of-Work (PoW) `sha3-512` bằng C++ native OpenSSL chỉ trong ~2ms.
 
 ---
 
-## 🛠 1. Quickstart
+## ⚡ Tính Năng Nổi Bật
 
-> 📖 **Xem hướng dẫn triển khai chi tiết Local & VPS tại**: [DEPLOYMENT.md](file:///Users/dangquochuy/Documents/Projects/ChatGPT-Nodejs/DEPLOYMENT.md)
+- **Chuẩn REST API OpenAI Tương Thích 100%**:
+  - `POST /v1/chat/completions`: Đầy đủ chế độ phản hồi tức thì và Streaming SSE (`stream: true`) theo từng token.
+  - `GET /v1/models`: Danh mục model chuẩn hóa tương thích hệ sinh thái OpenAI (`gpt-4o`, `gpt-4o-mini`, `o1`, `o3-mini`, `chatgpt-4o-latest`...).
+  - `POST /v1/responses`: Tương thích định dạng OpenAI Realtime / Responses.
+  - `POST /v1/search`: Cầu nối truy vấn tìm kiếm trực tiếp trên ChatGPT.
+- **Chuẩn API Anthropic Claude**:
+  - `POST /v1/messages`: Tương thích toàn diện với các client và SDK của Claude (`claude-3-5-sonnet`, `claude-3-5-haiku`...).
+- **Động Cơ Kỹ Thuật Đảo Ngược & Vượt Rào Sentinel**:
+  - **OpenAI Web Sentinel Handshake**: Tự động đàm phán yêu cầu bảo mật qua 2 bước `/prepare` và `/finalize`.
+  - **Siêu Thuật Toán PoW (Proof-of-Work)**: Giải toán mã hóa `sha3-512` native bằng `node:crypto` với tốc độ cực nhanh (~2ms).
+  - **Turnstile Bytecode VM**: Máy ảo nhúng hỗ trợ giải mã challenge Cloudflare Turnstile token.
+  - **Giả Lập Vân Tay Trình Duyệt**: Tự động giả lập đầy đủ headers chuẩn (`sec-ch-ua`, `oai-device-id`, `oai-session-id`, `user-agent`).
+  - **JSON Patch Diff Engine**: Xử lý và giải mã các luồng incremental delta patch theo chuẩn RFC 6902.
+- **Hệ Thống Quản Lý Account Pool Thông Minh**:
+  - Tự động xoay vòng Token (Round-robin) cân bằng tải kèm kiểm tra sức khỏe tài khoản.
+  - Hỗ trợ nạp / xóa tài khoản "nóng" qua REST API mà không cần khởi động lại server.
+  - Tự động làm mới Token khi gặp mã lỗi 401 qua endpoint OAuth PKCE (`auth.openai.com/oauth/token`).
+  - Lưu trữ dữ liệu bền vững bằng file JSON (`data/accounts.json`), hỗ trợ ánh xạ volume.
+- **Tối Ưu Triển Khai Production**:
+  - Tích hợp pipeline tự động Obfuscate mã hóa toàn bộ logic nghiệp vụ cốt lõi nhằm bảo vệ mã nguồn.
+  - Hỗ trợ sẵn Docker Compose, PM2 Cluster (đa nhân CPU) và cấu hình Nginx chuẩn SSE.
 
-### Option A: Run Locally with Node.js
+---
+
+## 🛠 1. Khởi Động Nhanh (Quickstart)
+
+> 📖 **Xem hướng dẫn chi tiết triển khai Local, VPS (Docker & PM2 Cluster) và cấu hình Nginx SSL tại**: [DEPLOYMENT.md](file:///Users/dangquochuy/Documents/Projects/ChatGPT-Nodejs/DEPLOYMENT.md)
+
+### Cách A: Chạy trực tiếp trên máy với Node.js
 
 ```bash
-# 1. Install dependencies
+# 1. Cài đặt thư viện phụ thuộc
 npm install
 
-# 2. Configure environment
+# 2. Tạo file cấu hình môi trường
 cp .env.example .env
 
-# 3. Build & Run
+# 3. Biên dịch & Chạy Production
 npm run build
 npm start
 
-# Or in development with auto-reload:
+# Hoặc chạy chế độ phát triển (tự động reload khi sửa code):
 npm run dev
 ```
 
-> Server listens at `http://localhost:3040`.
+> Mặc định server sẽ lắng nghe tại: `http://localhost:3040`.
 
 ---
 
-### Option B: Run with Docker Compose
+### Cách B: Chạy nhanh với Docker Compose
 
 ```bash
 docker compose up -d --build
@@ -63,12 +65,12 @@ docker compose up -d --build
 
 ---
 
-## 🔑 2. Account & Token Management API
+## 🔑 2. API Quản Lý Tài Khoản & Token Pool
 
-All management routes require:
+Mọi request đến route quản trị đều yêu cầu header:
 `Authorization: Bearer <CHATGPT2API_AUTH_KEY>`
 
-### 2.1 Add Token / Accounts (`POST /api/accounts`)
+### 2.1 Thêm Token / Tài Khoản (`POST /api/accounts`)
 
 ```bash
 curl -X POST "http://localhost:3040/api/accounts" \
@@ -81,29 +83,29 @@ curl -X POST "http://localhost:3040/api/accounts" \
   }'
 ```
 
-Or with bash helper:
+Hoặc dùng script bash tiện ích:
 ```bash
-./scripts/api_add_token.sh "eyJhbGciOi..." "refresh_token_optional"
+./scripts/api_add_token.sh "eyJhbGciOi..." "refresh_token_tuy_chon"
 ```
 
-### 2.2 List Accounts (`GET /api/accounts`)
+### 2.2 Xem Danh Sách Tài Khoản (`GET /api/accounts`)
 
 ```bash
 curl -X GET "http://localhost:3040/api/accounts" \
   -H "Authorization: Bearer chatgpt2api_secret_key_change_me"
 ```
 
-### 2.3 Refresh Tokens (`POST /api/accounts/refresh`)
+### 2.3 Tự Động Làm Mới Token (`POST /api/accounts/refresh`)
 
 ```bash
-# Refresh all accounts
+# Làm mới tất cả tài khoản có refresh token trong pool
 curl -X POST "http://localhost:3040/api/accounts/refresh" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer chatgpt2api_secret_key_change_me" \
   -d '{"access_tokens": []}'
 ```
 
-### 2.4 Delete Accounts (`DELETE /api/accounts`)
+### 2.4 Xóa Tài Khoản Khỏi Pool (`DELETE /api/accounts`)
 
 ```bash
 curl -X DELETE "http://localhost:3040/api/accounts" \
@@ -118,9 +120,9 @@ curl -X DELETE "http://localhost:3040/api/accounts" \
 
 ---
 
-## 🤖 3. OpenAI Chat Completions
+## 🤖 3. Gọi OpenAI Chat Completions
 
-### Non-streaming:
+### Chế độ Non-streaming:
 
 ```bash
 curl -X POST "http://localhost:3040/v1/chat/completions" \
@@ -134,7 +136,7 @@ curl -X POST "http://localhost:3040/v1/chat/completions" \
   }'
 ```
 
-### Streaming (SSE):
+### Chế độ Streaming (SSE từng token):
 
 ```bash
 curl -N -X POST "http://localhost:3040/v1/chat/completions" \
@@ -144,14 +146,14 @@ curl -N -X POST "http://localhost:3040/v1/chat/completions" \
     "model": "gpt-4o-mini",
     "stream": true,
     "messages": [
-      { "role": "user", "content": "Tell me a short joke." }
+      { "role": "user", "content": "Kể cho tôi nghe một câu chuyện cười ngắn." }
     ]
   }'
 ```
 
 ---
 
-## 🎭 4. Anthropic Claude API
+## 🎭 4. Gọi Anthropic Claude API
 
 ```bash
 curl -X POST "http://localhost:3040/v1/messages" \
@@ -160,23 +162,23 @@ curl -X POST "http://localhost:3040/v1/messages" \
   -d '{
     "model": "claude-3-5-sonnet-20241022",
     "messages": [
-      { "role": "user", "content": "Hello Claude!" }
+      { "role": "user", "content": "Chào Claude!" }
     ]
   }'
 ```
 
 ---
 
-## ⚙️ 5. Environment Variables (`.env`)
+## ⚙️ 5. Cấu Hình Biến Môi Trường (`.env`)
 
-| Variable | Default | Description |
+| Biến môi trường | Mặc định | Mô tả chi tiết |
 | :--- | :--- | :--- |
-| `PORT` | `3040` | Port the server listens on |
-| `CHATGPT2API_AUTH_KEY` | `chatgpt2api_secret_key_change_me` | Master API key for client & admin authorization |
-| `STORAGE_BACKEND` | `json` | Storage engine (`json` or `memory`) |
-| `DATA_DIR` | `./data` | Directory for accounts & data files |
-| `PROXY_URL` | *(empty)* | Optional upstream proxy (HTTP, HTTPS, SOCKS5) |
-| `LOG_LEVEL` | `info` | Logging verbosity (`debug`, `info`, `warn`, `error`) |
+| `PORT` | `3040` | Port server lắng nghe |
+| `CHATGPT2API_AUTH_KEY` | `chatgpt2api_secret_key_change_me` | Master API Key dùng cho client và route quản trị |
+| `STORAGE_BACKEND` | `json` | Cơ chế lưu trữ (`json` hoặc `memory`) |
+| `DATA_DIR` | `./data` | Thư mục lưu trữ accounts và dữ liệu |
+| `PROXY_URL` | *(để trống)* | Proxy trung gian nếu IP VPS bị chặn (HTTP, HTTPS, SOCKS5) |
+| `LOG_LEVEL` | `info` | Mức độ hiển thị log (`debug`, `info`, `warn`, `error`) |
 
 ---
 
@@ -195,5 +197,4 @@ Nếu dự án này hữu ích với công việc hoặc hệ thống của bạ
 
 ## 🛡️ License
 
-MIT License. Developed by [Danieldev](https://github.com/danieldev23).
-
+Giấy phép mã nguồn mở MIT. Phát triển bởi [Danieldev](https://github.com/danieldev23).
