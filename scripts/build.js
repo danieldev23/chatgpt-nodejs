@@ -112,6 +112,7 @@ const configFiles = [
   ".gitignore",
   ".dockerignore",
   "readme.md",
+  "DEPLOYMENT.md",
   ".env.example",
 ];
 

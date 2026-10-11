@@ -32,6 +32,8 @@ Direct drop-in replacement for `chatgpt2api` with ultra-low memory footprint, ze
 
 ## 🛠 1. Quickstart
 
+> 📖 **Xem hướng dẫn triển khai chi tiết Local & VPS tại**: [DEPLOYMENT.md](file:///Users/dangquochuy/Documents/Projects/ChatGPT-Nodejs/DEPLOYMENT.md)
+
 ### Option A: Run Locally with Node.js
 
 ```bash

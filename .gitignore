@@ -5,3 +5,6 @@ production/
 data/
 *.log
 .DS_Store
+video-guide
+ROADMAP.md
+production
